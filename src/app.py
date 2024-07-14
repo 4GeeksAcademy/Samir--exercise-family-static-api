@@ -36,20 +36,31 @@ def handle_hello():
     response_body = {
         "family": members
     }
-
-
     return jsonify(response_body), 200
 
 @app.route('/members', methods=['POST'])
 def add_member():
     data = request.get_json()
-    new_member=jackson_family.add_member(data)
-    return jsonify(new_member,{"done": True}), 200
+    if not data:
+        return jsonify({"error": "Invalid request body"}), 400
+    required_fields = ["first_name", "age",]
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+    try:
+        new_member = jackson_family.add_member(data)
+        return jsonify({"member": new_member, "done": True}), 201
+    except Exception as e:
+        return jsonify({"error": "Internal Server Error"}), 500
 
 @app.route('/members/<int:member_id>', methods=['DELETE'])
 def delete_member(member_id):
+    if not isinstance(member_id, int):
+        return jsonify({"error": "Invalid member ID"}), 400
     result = jackson_family.delete_member(member_id)
-    return jsonify(result), 200
+    if result:
+        return jsonify({"message": "Member deleted successfully"}), 200
+    else:
+        return jsonify({"error": "Member not found"}), 404
 
 @app.route('/members/<int:member_id>', methods=['PATCH'])
 def update_member(member_id):
@@ -59,8 +70,13 @@ def update_member(member_id):
 
 @app.route('/members/<int:member_id>', methods=['GET'])
 def get_member(member_id):
-    members = jackson_family.get_member(member_id)
-    return jsonify(members), 200
+    if not isinstance(member_id, int):
+        return jsonify({"error": "Invalid member ID"}), 400
+    member = jackson_family.get_member(member_id)
+    if member:
+        return jsonify({"member": member}), 200
+    else:
+        return jsonify({"error": "Member not found"}), 404
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
