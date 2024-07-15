@@ -15,6 +15,31 @@ CORS(app)
 # create the jackson family object
 jackson_family = FamilyStructure("Jackson")
 
+John={
+    "last_name": jackson_family.last_name,
+    "first_name":"John",
+    "age":33,
+    "lucky_numbers": [7,13,22]
+}
+
+Jane={  
+    "last_name": jackson_family.last_name,
+    "first_name":"Jane",
+    "age":35,
+    "lucky_numbers": [10,14,3]
+}
+
+Jimmy={ 
+    "last_name": jackson_family.last_name,
+    "first_name":"Jimmy",
+    "age":5,
+    "lucky_numbers": [1]
+}
+
+jackson_family.add_member(John)
+jackson_family.add_member(Jane)
+jackson_family.add_member(Jimmy)
+
 # new_member={"name":"michael","age":40,"luck_numbers":[1,2,3]}
 # jackson_family.add_member(member=new_member)
 
@@ -33,48 +58,43 @@ def handle_hello():
 
     # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
-    response_body = {
-        "family": members
-    }
+    response_body = members
+    
     return jsonify(response_body), 200
 
-@app.route('/members', methods=['POST'])
+@app.route('/member', methods=['POST'])
 def add_member():
     data = request.get_json()
     if not data:
-        return jsonify({"error": "Invalid request body"}), 400
-    required_fields = ["first_name", "age",]
-    if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing required fields"}), 400
-    try:
-        new_member = jackson_family.add_member(data)
-        return jsonify({"member": new_member, "done": True}), 201
-    except Exception as e:
-        return jsonify({"error": "Internal Server Error"}), 500
+        return jsonify({"error": "Bad Request"}), 400
+    member = jackson_family.add_member(data)
+    return jsonify(member), 200
 
-@app.route('/members/<int:member_id>', methods=['DELETE'])
-def delete_member(member_id):
-    if not isinstance(member_id, int):
+@app.route('/member/<int:id>', methods=['DELETE'])
+def delete_member(id):
+    if not isinstance(id, int):
         return jsonify({"error": "Invalid member ID"}), 400
-    result = jackson_family.delete_member(member_id)
+    result = jackson_family.delete_member(id)
     if result:
-        return jsonify({"message": "Member deleted successfully"}), 200
+        return {"done": True}, 200
     else:
         return jsonify({"error": "Member not found"}), 404
+        
+    
 
-@app.route('/members/<int:member_id>', methods=['PATCH'])
-def update_member(member_id):
+@app.route('/member/<int:id>', methods=['PATCH'])
+def update_member(id):
     data = request.get_json()
-    result = jackson_family.update_member(member_id, data)
+    result = jackson_family.update_member(id, data)
     return jsonify(result), 200
 
-@app.route('/members/<int:member_id>', methods=['GET'])
-def get_member(member_id):
-    if not isinstance(member_id, int):
+@app.route('/member/<int:id>', methods=['GET'])
+def get_member(id):
+    if not isinstance(id, int):
         return jsonify({"error": "Invalid member ID"}), 400
-    member = jackson_family.get_member(member_id)
+    member = jackson_family.get_member(id)
     if member:
-        return jsonify({"member": member}), 200
+        return jsonify(member), 200
     else:
         return jsonify({"error": "Member not found"}), 404
 
